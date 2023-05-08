@@ -1,0 +1,45 @@
+# RNN Model
+class RNN(torch.nn.Module):
+    def __init__(self, D_in, D_hidden, D_out, nLayers=1):
+        super(RNN, self).__init__()
+        self.D_hidden = D_hidden
+        self.nLayers = nLayers
+        self.rnn = torch.nn.RNN(D_in, D_hidden, num_layers=nLayers)
+        self.linear = torch.nn.Linear(D_hidden, D_out)
+        self.hidden = torch.zeros(nLayers, 1, D_hidden)
+
+    def forward(self, input_seq):
+        rnn_out, self.hidden = self.rnn(input_seq.view(len(input_seq), 1, -1), self.hidden)
+        y_pred = self.linear(rnn_out.view(len(input_seq), -1))
+        return y_pred[-1]
+
+# Train Function
+def train(training_sequences, rnn_type, num_layers, learning_rate, epochs=100):
+    D_in = training_sequences[0][0].shape[1]
+    D_out = training_sequences[0][1].shape[1]
+    D_hidden = 20
+
+    if rnn_type.upper() == 'RNN':
+        model = RNN(D_in, D_hidden, D_out, nLayers=num_layers)
+
+    criterion = torch.nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    for epoch in range(epochs):
+        for seq, labels in training_sequences:
+
+            optimizer.zero_grad()
+
+            if rnn_type.upper() == 'RNN':
+                model.hidden = torch.zeros(model.nLayers, 1, model.D_hidden) # Extra Step!!
+
+            outputs = model(seq)
+            loss = criterion(outputs, labels)
+            loss.backward()
+
+            optimizer.step()
+
+        if epoch % 10 == 1:
+            print('epoch {}: loss = {}'.format(epoch, loss.item()))
+
+    return model
