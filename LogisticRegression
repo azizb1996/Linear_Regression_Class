@@ -1,0 +1,32 @@
+class LogisticRegression(torch.nn.Module):
+    def __init__(self, inputSize,outputSize):
+        super(LogisticRegression1, self).__init__()
+        self.linear = torch.nn.Linear(inputSize, outputSize)
+        self.transform = torch.nn.LogSoftmax(dim=1)
+
+    def forward(self, x):
+        #out = F.sigmoid(self.linear(x))
+        out = self.transform(self.linear(x))
+        return out
+
+
+def train1(X_train, Y_train, epochs):
+    model = LogisticRegression1(X_train.shape[1], nclass)
+    criterion = torch.nn.NLLLoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=0.1)
+
+    for epoch in range(epochs):
+        inputs = torch.from_numpy(X_train).float()
+        labels = torch.from_numpy(Y_train).float()
+
+        optimizer.zero_grad()
+        outputs = model(inputs)
+
+        loss = criterion(outputs, labels.squeeze().long())
+
+        loss.backward()
+        optimizer.step()
+
+        print('epoch {}: loss = {}'.format(epoch, loss.item()))
+
+    return model
