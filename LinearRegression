@@ -1,0 +1,37 @@
+# Linear regression
+class linearRegression(torch.nn.Module):
+    def __init__(self, inputSize, outputSize):
+        super(linearRegression, self).__init__()
+        self.linear = torch.nn.Linear(inputSize, outputSize)
+
+    def forward(self, x):
+        out = self.linear(x)
+        return out
+
+def train(X_train, Y_train, epochs, learning_rate, ridge=None, lasso=None, reg_lambda=None):
+    model = linearRegression(X_train.shape[1], Y_train.shape[1])
+    criterion = torch.nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr = learning_rate)
+
+    if ridge:
+        optimizer.param_groups[0]['weight_decay'] = reg_lambda
+
+    for epoch in range(epochs):
+        inputs = torch.from_numpy(X_train).float()
+        labels = torch.from_numpy(Y_train).float()
+
+        optimizer.zero_grad()
+        outputs = model(inputs)
+
+        if lasso:
+            l1_norm = reg_lambda * torch.norm(model.linear.weight, p=1)
+        else:
+            l1_norm = 0
+        loss = criterion(outputs, labels)
+        loss += l1_norm
+        loss.backward()
+
+        optimizer.step()
+        # print('epoch {}: loss = {}'.format(epoch, loss.item()))
+
+    return model
