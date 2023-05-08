@@ -1,0 +1,41 @@
+# Define a Three Layer network
+class ThreeLayerNet(torch.nn.Module):
+    def __init__(self, D_in = 10, H1 = 32, H2= 32, D_out = 1):
+        super(ThreeLayerNet, self).__init__()
+        self.linear1 = torch.nn.Linear(D_in, H1)
+        self.linear2 = torch.nn.Linear(H1, H2)
+        self.leaner3 = torch.nn.Linear(H2, D_out)
+
+    def forward(self, x):
+        h_relu = self.linear1(x)
+        h_relu2 = self.linear2(h_relu)
+        y_pred = self.leaner3(h_relu2)
+        return y_pred
+
+# Training function
+def train(X_train, Y_train, H, learning_rate, epochs=1000, ridge=None, lasso=None, reg_lambda=None):
+    model = ThreeLayerNet(X_train.shape[1], H, Y_train.shape[1])
+    criterion = torch.nn.MSELoss()
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+
+    if ridge:
+        optimizer.param_groups[0]['weight_decay'] = reg_lambda
+
+    for epoch in range(epochs):
+        inputs = torch.from_numpy(X_train).float()
+        labels = torch.from_numpy(Y_train).float()
+
+        optimizer.zero_grad()
+        outputs = model(inputs)
+
+        if lasso:
+            l1_norm = reg_lambda * torch.norm(model.linear.weight, p=1)
+        else:
+            l1_norm = 0
+        loss = criterion(outputs, labels)
+        loss += l1_norm
+        loss.backward()
+
+        optimizer.step()
+
+    return model
